@@ -12,6 +12,7 @@ XBRL of Tokyo Stock Exchange Disclosure
 
 # Usgae
 
+```python
 from xbrl2bspl import Xbrl2BsPl
 
 path = "081220180510431993.zip"
@@ -19,9 +20,11 @@ f = open(path)
 xbrl2bspl=Xbrl2BsPl()
 result=xbrl2bspl.convert(f.read())
 print result
+```python
 
 # Output
 
+```python
 BS:
 allowance_for_doubtful_accounts_ioa_by_group                 : -133
 assets                                                       : 71672
@@ -68,10 +71,15 @@ next_year_duration_operation_income                          : 2810
 next_year_duration_ordinary_income                           : 3190
 operation_income_progress                                    : 1.0
 ordinary_income_progress                                     : 1.0
+```python
 
 # Example
 
 python convert_xbrl.py
+
+# Fields
+
+http://tdnet-search.appspot.com/?mode=about
 
 # Demo
 
