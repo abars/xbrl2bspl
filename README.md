@@ -10,7 +10,7 @@ Python2.7
 
 XBRL of Tokyo Stock Exchange Disclosure
 
-# Usgae
+# Usage
 
 ```python
 from xbrl2bspl import Xbrl2BsPl
@@ -20,7 +20,7 @@ f = open(path)
 xbrl2bspl=Xbrl2BsPl()
 result=xbrl2bspl.convert(f.read())
 print result
-```python
+```
 
 # Output
 
@@ -71,7 +71,7 @@ next_year_duration_operation_income                          : 2810
 next_year_duration_ordinary_income                           : 3190
 operation_income_progress                                    : 1.0
 ordinary_income_progress                                     : 1.0
-```python
+```
 
 # Example
 
