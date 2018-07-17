@@ -73,7 +73,7 @@ operation_income_progress                                    : 1.0
 ordinary_income_progress                                     : 1.0
 ```
 
-# Example
+# Example Code
 
 python convert_xbrl.py
 
@@ -84,3 +84,7 @@ http://tdnet-search.appspot.com/?mode=about
 # Demo
 
 http://tdnet-search.appspot.com/?mode=analyze
+
+# Architecture
+
+http://blog.livedoor.jp/abars/archives/52373311.html
