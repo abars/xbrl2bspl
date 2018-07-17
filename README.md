@@ -6,6 +6,10 @@ Convert XBRL to Balance Sheet and Profit and Loss statement.
 
 Python2.7
 
+# Supported File Format
+
+XBRL of Tokyo Stock Exchange Disclosure
+
 # Usgae
 
 from xbrl2bspl import Xbrl2BsPl
