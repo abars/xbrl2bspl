@@ -8,8 +8,8 @@ from xbrl2bspl import Xbrl2BsPl
 path = "081220180510431993.zip"
 
 f = open(path)
-xbrl2bs=Xbrl2BsPl()
-result=xbrl2bs.convert(f.read())
+xbrl2bspl=Xbrl2BsPl()
+result=xbrl2bspl.convert(f.read())
 
 print "BS:"
 if(result["bs"]):
