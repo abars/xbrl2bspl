@@ -204,18 +204,32 @@ class Xbrl2BsPl():
     ex_map.append(["short_term_investment_securities","有価証券","jppfs_cor:ShortTermInvestmentSecurities"])
     ex_map.append(["short_term_loans_receivable","短期貸付金","jppfs_cor:ShortTermLoansReceivable"])
     ex_map.append(["deposits_paid","預け金","jppfs_cor:DepositsPaid"])
+    ex_map.append(["inventories","たな卸資産","jppfs_cor:Inventories"])
+    #ex_map.append(["inventories","その他","jppfs_cor:Inventories"])
+    ex_map.append(["allowance_for_doubtful_accounts_ca","貸倒引当金","jppfs_cor:AllowanceForDoubtfulAccountsCA"])
+    ex_map.append(["current_assets","流動資産合計","jppfs_cor:CurrentAssets"])
+
     ex_map.append(["land","土地","jppfs_cor:Land"])
     ex_map.append(["buildings_and_structures","建物及び構築物","jppfs_cor:BuildingsAndStructures"])
     ex_map.append(["buildings_and_structures_net","建物及び構築物（純額）","jppfs_cor:BuildingsAndStructuresNet"])
-    ex_map.append(["allowance_for_doubtful_accounts_ioa_by_group","貸倒引当金","jppfs_cor:AllowanceForDoubtfulAccountsIOAByGroup"])
+    ex_map.append(["machinery_equipment_and_vehicles","機械装置及び運搬具","jppfs_cor:MachineryEquipmentAndVehicles"])
+    ex_map.append(["machinery_equipment_and_vehicles_net","機械装置及び運搬具（純額）","jppfs_cor:MachineryEquipmentAndVehiclesNet"])
+    ex_map.append(["construction_in_progress","建設仮勘定","jppfs_cor:ConstructionInProgress"])
+
     ex_map.append(["deferred_tax_assets_ca","繰延税金資産","jppfs_cor:DeferredTaxAssetsCA"])
-    ex_map.append(["deferred_tax_liabilities_ncl","繰延税金負債","jppfs_cor:DeferredTaxLiabilitiesNCL"])
-    ex_map.append(["current_assets","流動資産合計","jppfs_cor:CurrentAssets"])
+    ex_map.append(["allowance_for_doubtful_accounts_ioa_by_group","貸倒引当金","jppfs_cor:AllowanceForDoubtfulAccountsIOAByGroup"])
     ex_map.append(["assets","資産合計","jppfs_cor:Assets"])
+
     ex_map.append(["short_term_loans_payable","短期借入金","jppfs_cor:ShortTermLoansPayable"])
     ex_map.append(["long_term_loans_payable","長期借入金","jppfs_cor:LongTermLoansPayable"])
+    ex_map.append(["deferred_tax_liabilities_ncl","繰延税金負債","jppfs_cor:DeferredTaxLiabilitiesNCL"])
+
+    ex_map.append(["current_liabilities","流動負債合計","jppfs_cor:CurrentLiabilities"])
+    ex_map.append(["noncurrent_liabilities","固定負債合計","jppfs_cor:NoncurrentLiabilities"])
     ex_map.append(["liabilities","負債合計","jppfs_cor:Liabilities"])
+
     ex_map.append(["net_assets","純資産合計","jppfs_cor:NetAssets"])
+
     ex_map.append(["liabilities_and_net_assets","負債純資産合計","jppfs_cor:LiabilitiesAndNetAssets"])
     return ex_map
 
