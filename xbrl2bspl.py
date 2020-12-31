@@ -240,28 +240,10 @@ class Xbrl2BsPl():
     for i in range(0,len(ex_map)):
       fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text)
 
-    #fields["cash_and_deposits"]=self.get_value("現金及び預金","jppfs_cor:CashAndDeposits",text)
-    #fields["notes_and_accounts_receivable_trade"]=self.get_value("受取手形及び売掛金","jppfs_cor:NotesAndAccountsReceivableTrade",text)
     if(fields["notes_and_accounts_receivable_trade"]==0):
       fields["notes_and_accounts_receivable_trade"]=fields["notes_and_accounts_receivable_trade"]+self.get_value("売掛金","jppfs_cor:AccountsReceivableTrade",text)
       fields["notes_and_accounts_receivable_trade"]=fields["notes_and_accounts_receivable_trade"]+self.get_value("受取手形","jppfs_cor:NotesReceivableTrade",text)
-    #fields["short_term_loans_receivable"]=self.get_value("短期貸付金","jppfs_cor:ShortTermLoansReceivable",text)
-    #fields["deposits_paid"]=self.get_value("預け金","jppfs_cor:DepositsPaid",text)
-    #fields["short_term_investment_securities"]=self.get_value("有価証券","jppfs_cor:ShortTermInvestmentSecurities",text)
-    #fields["investment_securities"]=self.get_value("投資有価証券","jppfs_cor:InvestmentSecurities",text)
-    #fields["land"]=self.get_value("土地","jppfs_cor:Land",text)
-    #fields["buildings_and_structures"]=self.get_value("建物及び構築物","jppfs_cor:BuildingsAndStructures",text)
-    #fields["buildings_and_structures_net"]=self.get_value("建物及び構築物（純額）","jppfs_cor:BuildingsAndStructuresNet",text)
-    #fields["allowance_for_doubtful_accounts_ioa_by_group"]=self.get_value("貸倒引当金","jppfs_cor:AllowanceForDoubtfulAccountsIOAByGroup",text)
-    #fields["deferred_tax_assets_ca"]=self.get_value("繰延税金資産","jppfs_cor:DeferredTaxAssetsCA",text)
-    #fields["deferred_tax_liabilities_ncl"]=self.get_value("繰延税金負債","jppfs_cor:DeferredTaxLiabilitiesNCL",text)
-    #fields["short_term_loans_payable"]=self.get_value("短期借入金","jppfs_cor:ShortTermLoansPayable",text)
-    #fields["long_term_loans_payable"]=self.get_value("長期借入金","jppfs_cor:LongTermLoansPayable",text)
-    #fields["current_assets"]=self.get_value("流動資産合計","jppfs_cor:CurrentAssets",text)
-    #fields["assets"]=self.get_value("資産合計","jppfs_cor:Assets",text)
-    #fields["liabilities"]=self.get_value("負債合計","jppfs_cor:Liabilities",text)
-    #fields["net_assets"]=self.get_value("純資産合計","jppfs_cor:NetAssets",text)
-    #fields["liabilities_and_net_assets"]=self.get_value("負債純資産合計","jppfs_cor:LiabilitiesAndNetAssets",text)
+
     return fields
 
   def get_value(self,jap,item,line,context=None,yen_unit=False):
