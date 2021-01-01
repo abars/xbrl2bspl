@@ -5,7 +5,7 @@ import numpy as np
 
 from xbrl2bspl import Xbrl2BsPl
 
-path = "081220201102414384.zip"
+path = "test_data/081220200508407632.zip"
 
 f = open(path)
 xbrl2bspl=Xbrl2BsPl()

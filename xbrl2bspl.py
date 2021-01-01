@@ -203,10 +203,15 @@ class Xbrl2BsPl():
     fields['ordinary_income_progress']=ordinary_income_progress
     fields['net_income_progress']=net_income_progress
 
-    #fields["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock"]=self.get_value("期末発行済株式数（自己株式を含む）","tse-ed-t:NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock",text)
-    #fields["NumberOfTreasuryStockAtTheEndOfFiscalYear"]=self.get_value("期末自己株式数","tse-ed-t:NumberOfTreasuryStockAtTheEndOfFiscalYear",text)
-    #fields["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock"]=self.get_value("期中平均株式数（四半期累計）","tse-ed-t:AverageNumberOfShares",text)
-
+    ex_map = XbrlTaxonomy.pl_taxonomy()
+    for i in range(0,len(ex_map)):
+      v=self.get_value(ex_map[i][1],ex_map[i][2],text,"CurrentAccumulated[a-zA-Z_0-9]*",yen_unit=True)
+      if v==0:
+        v=self.get_value(ex_map[i][1],ex_map[i][2],text,"CurrentYearInstant_NonConsolidatedMember_ResultMember",yen_unit=True)
+      if v==0:
+        v=self.get_value(ex_map[i][1],ex_map[i][2],text,"CurrentYearDuration_NonConsolidatedMember_ResultMember",yen_unit=True)
+      fields[ex_map[i][0]]=v
+      
     return fields
 
   @staticmethod
