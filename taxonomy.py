@@ -559,7 +559,6 @@ class XbrlTaxonomy():
   def cf_taxonomy():
     ex_map=[]
 
-    ex_map.append(['subtotal_ope_c_f','小計','jppfs_cor:SubtotalOpeCF'])
     ex_map.append(['operating_income_ope_c_f','営業収入','jppfs_cor:OperatingIncomeOpeCF'])
     ex_map.append(['payments_for_raw_materials_and_goods_ope_c_f','原材料又は商品の仕入れによる支出','jppfs_cor:PaymentsForRawMaterialsAndGoodsOpeCF'])
     ex_map.append(['payments_for_payroll_ope_c_f','人件費の支出','jppfs_cor:PaymentsForPayrollOpeCF'])
@@ -804,6 +803,7 @@ class XbrlTaxonomy():
     ex_map.append(['increase_decrease_in_provision_for_loss_on_construction_contracts_ope_c_f_v_e_s','受注工事損失引当金の増減額（△は減少）','jppfs_cor:IncreaseDecreaseInProvisionForLossOnConstructionContractsOpeCFVES'])
     ex_map.append(['increase_decrease_in_provision_for_construction_warranties_ope_c_f_v_e_s','保証工事引当金の増減額（△は減少）','jppfs_cor:IncreaseDecreaseInProvisionForConstructionWarrantiesOpeCFVES'])
     ex_map.append(['other_net_ope_c_f','その他','jppfs_cor:OtherNetOpeCF'])
+    ex_map.append(['subtotal_ope_c_f','小計','jppfs_cor:SubtotalOpeCF'])
     ex_map.append(['interest_and_dividends_income_received_ope_c_f_inv_c_f','利息及び配当金の受取額','jppfs_cor:InterestAndDividendsIncomeReceivedOpeCFInvCF'])
     ex_map.append(['interest_expenses_paid_ope_c_f_fin_c_f','利息の支払額','jppfs_cor:InterestExpensesPaidOpeCFFinCF'])
     ex_map.append(['interest_income_received_ope_c_f','利息の受取額','jppfs_cor:InterestIncomeReceivedOpeCF'])
