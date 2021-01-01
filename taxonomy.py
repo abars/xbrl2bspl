@@ -1008,3 +1008,13 @@ class XbrlTaxonomy():
     ex_map.append(['cash_and_cash_equivalents','現金及び現金同等物の残高','jppfs_cor:CashAndCashEquivalents'])
 
     return ex_map
+
+  @staticmethod
+  def pl_taxonomy():
+    ex_map=[]
+
+    ex_map.append(['number_of_issued_and_outstanding_shares_at_the_end_of_fiscal_year_including_treasury_stock','期末発行済株式数（自己株式を含む）','tse-ed-t:NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock'])
+    ex_map.append(['number_of_treasury_stock_at_the_end_of_fiscal_year','期末自己株式数','tse-ed-t:NumberOfTreasuryStockAtTheEndOfFiscalYear'])
+    ex_map.append(['average_number_of_shares','期中平均株式数（四半期累計）','tse-ed-t:AverageNumberOfShares'])
+
+    return ex_map
