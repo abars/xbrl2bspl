@@ -214,10 +214,6 @@ class Xbrl2BsPl():
       
     return fields
 
-  @staticmethod
-  def expression_map():
-    return XbrlTaxonomy.bs_taxonomy()
-
   def read_bs(self,text):
     fields={}
 
