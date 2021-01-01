@@ -1,12 +1,17 @@
 ﻿import os
 import re
+import sys
 
 import cv2
 import numpy as np
 
 import csv
 
-with open('1f_AccountList.csv') as f:
+input_file="bs.csv"
+if len(sys.argv)>=2:
+	input_file=sys.argv[1]
+
+with open(input_file) as f:
 	reader = csv.reader(f)
 	lines = [row for row in reader]
 	for data in lines:
