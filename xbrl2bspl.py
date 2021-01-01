@@ -21,12 +21,19 @@ class Xbrl2BsPl():
     analyze_success=False
     fields_pl=None
     fields_bs=None
+    fields_cf=None
 
     for f in zf.namelist():
       it_pl = re.finditer("-.*sm-.*\.htm", f, re.DOTALL)
       for m in it_pl:
         text=zf.read(f)
         fields_pl=self.read_pl(text)
+
+    for f in zf.namelist():
+      it_cf = re.finditer("-.*cf[0-9]+-", f, re.DOTALL)
+      for m in it_cf:
+        text=zf.read(f)
+        fields_cf=self.read_cf(text)
 
     acbs_exist=False
     for f in zf.namelist():
@@ -53,6 +60,7 @@ class Xbrl2BsPl():
     fields={}
     fields["bs"]=fields_bs
     fields["pl"]=fields_pl
+    fields["cf"]=fields_cf
     return fields
 
   def read_pl_core(self,text,target_date):
@@ -195,10 +203,15 @@ class Xbrl2BsPl():
     fields['ordinary_income_progress']=ordinary_income_progress
     fields['net_income_progress']=net_income_progress
 
-    #fields["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock"]=self.get_value("期末発行済株式数（自己株式を含む）","tse-ed-t:NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock",text)
-    #fields["NumberOfTreasuryStockAtTheEndOfFiscalYear"]=self.get_value("期末自己株式数","tse-ed-t:NumberOfTreasuryStockAtTheEndOfFiscalYear",text)
-    #fields["NumberOfIssuedAndOutstandingSharesAtTheEndOfFiscalYearIncludingTreasuryStock"]=self.get_value("期中平均株式数（四半期累計）","tse-ed-t:AverageNumberOfShares",text)
-
+    ex_map = XbrlTaxonomy.pl_taxonomy()
+    for i in range(0,len(ex_map)):
+      v=self.get_value(ex_map[i][1],ex_map[i][2],text,"CurrentAccumulated[a-zA-Z_0-9]*",yen_unit=True)
+      if v==0:
+        v=self.get_value(ex_map[i][1],ex_map[i][2],text,"CurrentYearInstant_NonConsolidatedMember_ResultMember",yen_unit=True)
+      if v==0:
+        v=self.get_value(ex_map[i][1],ex_map[i][2],text,"CurrentYearDuration_NonConsolidatedMember_ResultMember",yen_unit=True)
+      fields[ex_map[i][0]]=v
+      
     return fields
 
   @staticmethod
@@ -208,13 +221,22 @@ class Xbrl2BsPl():
   def read_bs(self,text):
     fields={}
 
-    ex_map = Xbrl2BsPl.expression_map()
+    ex_map = XbrlTaxonomy.bs_taxonomy()
     for i in range(0,len(ex_map)):
       fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text)
 
     if(fields["notes_and_accounts_receivable_trade"]==0):
       fields["notes_and_accounts_receivable_trade"]=fields["notes_and_accounts_receivable_trade"]+self.get_value("売掛金","jppfs_cor:AccountsReceivableTrade",text)
       fields["notes_and_accounts_receivable_trade"]=fields["notes_and_accounts_receivable_trade"]+self.get_value("受取手形","jppfs_cor:NotesReceivableTrade",text)
+
+    return fields
+
+  def read_cf(self,text):
+    fields={}
+
+    ex_map = XbrlTaxonomy.cf_taxonomy()
+    for i in range(0,len(ex_map)):
+      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text)
 
     return fields
 
