@@ -4,7 +4,7 @@ Convert XBRL to Balance Sheet and Profit and Loss statement.
 
 # Requirement
 
-Python2.7
+Python 2.7
 
 # Supported File Format
 
