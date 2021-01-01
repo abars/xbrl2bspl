@@ -236,7 +236,7 @@ class Xbrl2BsPl():
 
     ex_map = XbrlTaxonomy.cf_taxonomy()
     for i in range(0,len(ex_map)):
-      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text)
+      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"Current[a-zA-Z_]*")
 
     return fields
 
@@ -249,6 +249,7 @@ class Xbrl2BsPl():
     it1 = re.finditer("<ix:[^<>]*"+term1+"[^<>]*?"+term2+"[^<>]*?>([ 0-9,\.]+)<", line, re.DOTALL)
     it2 = re.finditer("<ix:[^<>]*"+term2+"[^<>]*?"+term1+"[^<>]*?>([ 0-9,\.]+)<", line, re.DOTALL)
     debug = False
+    #debug = item=="jppfs_cor:NetCashProvidedByUsedInFinancingActivities"
     value = self.get_value_adjust(it1,True,yen_unit,debug)
     if(value == 0):
       value = self.get_value_adjust(it2,True,yen_unit,debug)
