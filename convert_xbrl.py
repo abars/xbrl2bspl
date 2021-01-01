@@ -1,7 +1,5 @@
 import os
 
-import numpy as np
-
 from xbrl2bspl import Xbrl2BsPl
 
 path = "test_data/081220200508407632.zip"
