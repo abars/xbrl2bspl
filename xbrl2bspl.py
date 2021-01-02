@@ -37,8 +37,10 @@ class Xbrl2BsPl():
         fields_cf=self.read_cf(text)
 
     for f in zf.namelist():
-      it_cf = re.finditer("-.*pc[0-9]+-", f, re.DOTALL)
-      for m in it_cf:
+      it_pc = re.findall("-.*pc[0-9]+-", f, re.DOTALL)
+      if len(it_pc)==0:
+        it_pc = re.findall("-.*pl[0-9]+-", f, re.DOTALL)
+      for m in it_pc:
         text=zf.read(f)
         fields_pc=self.read_pc(text)
 
