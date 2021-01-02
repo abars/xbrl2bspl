@@ -26,6 +26,15 @@ if(result["pl"]):
 
 print ""
 
+print "PC:"
+if(result["pc"]):
+	key_sorted=sorted(result["pc"])
+	for key in key_sorted:
+		if result["pc"][key]!=0:
+			print "{0:60s}".format(key) + " : " + str(result["pc"][key])
+
+print ""
+
 print "CF:"
 if(result["cf"]):
 	key_sorted=sorted(result["cf"])

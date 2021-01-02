@@ -92,6 +92,34 @@ number_of_treasury_stock_at_the_end_of_fiscal_year           : 6716108
 operation_income_progress                                    : 1.0
 ordinary_income_progress                                     : 1.0
 
+PC:
+comprehensive_income                                         : 577
+comprehensive_income_attributable_to_owners_of_the_parent    : 577
+cost_of_sales                                                : 4824
+dividends_income_n_o_i                                       : 37
+extraordinary_loss                                           : 25
+gross_profit                                                 : 5806
+income_before_income_taxes                                   : 1040
+income_taxes                                                 : 340
+income_taxes_current                                         : 314
+income_taxes_deferred                                        : 25
+interest_expenses_n_o_e                                      : 3
+interest_income_n_o_i                                        : 7
+loss_on_retirement_of_noncurrent_assets_e_l                  : 25
+miscellaneous_income_n_o_i                                   : 3
+miscellaneous_loss_n_o_e                                     : 3
+net_sales                                                    : 10630
+non_operating_expenses                                       : 31
+non_operating_income                                         : 70
+operating_income                                             : 1027
+ordinary_income                                              : 1066
+other_comprehensive_income                                   : -122
+profit_loss                                                  : 700
+profit_loss_attributable_to_owners_of_parent                 : 700
+purchase_discounts_n_o_i                                     : 20
+selling_general_and_administrative_expenses                  : 4779
+valuation_difference_on_available_for_sale_securities_net_of_tax_o_c_i : -121
+
 CF:
 cash_and_cash_equivalents                                    : 10014
 cash_dividends_paid_fin_c_f                                  : -364

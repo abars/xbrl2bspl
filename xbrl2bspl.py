@@ -22,6 +22,7 @@ class Xbrl2BsPl():
     fields_pl=None
     fields_bs=None
     fields_cf=None
+    fields_pc=None
 
     for f in zf.namelist():
       it_pl = re.finditer("-.*sm-.*\.htm", f, re.DOTALL)
@@ -34,6 +35,12 @@ class Xbrl2BsPl():
       for m in it_cf:
         text=zf.read(f)
         fields_cf=self.read_cf(text)
+
+    for f in zf.namelist():
+      it_cf = re.finditer("-.*pc[0-9]+-", f, re.DOTALL)
+      for m in it_cf:
+        text=zf.read(f)
+        fields_pc=self.read_pc(text)
 
     acbs_exist=False
     for f in zf.namelist():
@@ -61,6 +68,7 @@ class Xbrl2BsPl():
     fields["bs"]=fields_bs
     fields["pl"]=fields_pl
     fields["cf"]=fields_cf
+    fields["pc"]=fields_pc
     return fields
 
   def read_pl_core(self,text,target_date):
@@ -231,6 +239,15 @@ class Xbrl2BsPl():
     fields={}
 
     ex_map = XbrlTaxonomy.cf_taxonomy()
+    for i in range(0,len(ex_map)):
+      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"Current[a-zA-Z_]*")
+
+    return fields
+
+  def read_pc(self,text):
+    fields={}
+
+    ex_map = XbrlTaxonomy.pc_taxonomy()
     for i in range(0,len(ex_map)):
       fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"Current[a-zA-Z_]*")
 
