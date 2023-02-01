@@ -6,15 +6,28 @@ import sys
 import urllib
 
 import zipfile
-import StringIO
+if sys.version_info.major == 2:
+  import StringIO
+else:
+  from io import BytesIO
 
 from taxonomy import XbrlTaxonomy
 
 class Xbrl2BsPl():
+  def read_text(self,zf,f):
+    if sys.version_info.major == 2:
+      text=zf.read(f)
+    else:
+      text=zf.open(f, 'r').read().decode("utf-8")
+    return text
+
   def convert(self,content):
     # Zipファイルを開く
     try:
-      zf = zipfile.ZipFile(StringIO.StringIO(content),'r')
+      if sys.version_info.major == 2:
+        zf = zipfile.ZipFile(StringIO.StringIO(content),'r')
+      else:
+        zf = zipfile.ZipFile(BytesIO(content),'r')
     except zipfile.BadZipfile:
       return None
 
@@ -27,13 +40,13 @@ class Xbrl2BsPl():
     for f in zf.namelist():
       it_pl = re.finditer("-.*sm-.*\.htm", f, re.DOTALL)
       for m in it_pl:
-        text=zf.read(f)
+        text=self.read_text(zf,f)
         fields_pl=self.read_pl(text)
 
     for f in zf.namelist():
       it_cf = re.finditer("-.*cf[0-9]+-", f, re.DOTALL)
       for m in it_cf:
-        text=zf.read(f)
+        text=self.read_text(zf,f)
         fields_cf=self.read_cf(text)
 
     for f in zf.namelist():
@@ -41,7 +54,7 @@ class Xbrl2BsPl():
       if len(it_pc)==0:
         it_pc = re.findall("-.*pl[0-9]+-", f, re.DOTALL)
       for m in it_pc:
-        text=zf.read(f)
+        text=self.read_text(zf,f)
         fields_pc=self.read_pc(text)
 
     acbs_exist=False
@@ -56,7 +69,7 @@ class Xbrl2BsPl():
       else:
         it_bs = re.finditer("-.*bs[0-9]+-", f, re.DOTALL)
       for m in it_bs:
-        text=zf.read(f)
+        text=self.read_text(zf,f)
 
         fields_bs=self.read_bs(text)
         if(not fields_bs):
@@ -273,7 +286,7 @@ class Xbrl2BsPl():
   def get_value_adjust(self,it,treat_sign,yen_unit,debug):
     for m in it:
         if(debug):
-          print m.group(0)
+          print(m.group(0))
 
         it2 = re.finditer("scale=\"([0-9]+)\"", m.group(0), re.DOTALL)
         scale=6
@@ -295,16 +308,16 @@ class Xbrl2BsPl():
 
         value=m.group(1)
         if(debug):
-          print value
+          print(value)
         value=value.replace(",","")
         value=value.replace(" ","")
         if(value.find(".")!=-1):
           return float(value)*(10**scale)/(10**decimals)*sign
         value_fixed=int(value)*(10**scale)/(10**decimals)*sign
         if(debug):
-          print scale
-          print decimals
-          print value_fixed
+          print(scale)
+          print(decimals)
+          print(value_fixed)
         return value_fixed
 
     return 0

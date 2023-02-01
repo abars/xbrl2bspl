@@ -6,7 +6,10 @@ import sys
 import urllib
 
 import zipfile
-import StringIO
+if sys.version_info.major == 2:
+  import StringIO
+else:
+  from io import StringIO
 
 class XbrlTaxonomy():
   @staticmethod
