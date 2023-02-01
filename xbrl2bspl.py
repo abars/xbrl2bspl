@@ -11,7 +11,10 @@ if sys.version_info.major == 2:
 else:
   from io import BytesIO
 
-from taxonomy import XbrlTaxonomy
+try:
+  from taxonomy import XbrlTaxonomy
+except:
+  from .taxonomy import XbrlTaxonomy
 
 class Xbrl2BsPl():
   def read_text(self,zf,f):
