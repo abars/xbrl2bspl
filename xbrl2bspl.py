@@ -316,7 +316,10 @@ class Xbrl2BsPl():
         value=value.replace(" ","")
         if(value.find(".")!=-1):
           return float(value)*(10**scale)/(10**decimals)*sign
-        value_fixed=int(value)*(10**scale)/(10**decimals)*sign
+        if sys.version_info.major == 2:
+          value_fixed=int(value)*(10**scale)/(10**decimals)*sign
+        else:
+          value_fixed=int(value)*(10**scale)//(10**decimals)*sign
         if(debug):
           print(scale)
           print(decimals)
