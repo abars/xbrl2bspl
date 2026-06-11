@@ -273,7 +273,7 @@ class Xbrl2BsPl():
 
   def get_value(self,jap,item,line,context=None,yen_unit=False):
     if(not context):
-      context="Current[a-zA-Z_]*"
+      context="(?:Current|Interim)[a-zA-Z_]*"
     item=item.replace("tse-ed-t","tse-[a-zA-Z]*-t") #reit対応
     term1 = "contextRef=\""+context+"\""
     term2 = "name=\""+item+"\""
