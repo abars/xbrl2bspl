@@ -41,7 +41,7 @@ class Xbrl2BsPl():
     fields_pc=None
 
     for f in zf.namelist():
-      it_pl = re.finditer("-.*sm-.*\.htm", f, re.DOTALL)
+      it_pl = re.finditer("-.*s[my]-.*\.htm", f, re.DOTALL)
       for m in it_pl:
         text=self.read_text(zf,f)
         fields_pl=self.read_pl(text)
