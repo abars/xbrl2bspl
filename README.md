@@ -10,6 +10,16 @@ Python 2.7
 
 XBRL of Tokyo Stock Exchange Disclosure
 
+| Accounting standard | PL (summary) | BS |
+| --- | --- | --- |
+| Japanese GAAP | Yes | Yes (`bs` attachment, `jppfs_cor`) |
+| IFRS | Yes | Main items only (`fs` attachment, `jpigp_cor`) |
+| US GAAP | Yes | Total assets and net assets only (from the summary, because the BS attachment has no XBRL tags) |
+| REIT | Yes | Yes |
+
+For IFRS, items with a broad scope (e.g. other financial assets) are not mapped to Japanese GAAP items, so the net-net value is conservative.
+For IFRS and US GAAP, which have no ordinary income, `ordinary_income` contains profit before tax.
+
 # Usage
 
 ```python
