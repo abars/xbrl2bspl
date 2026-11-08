@@ -95,6 +95,9 @@ class Xbrl2BsPl():
     fields["net_sales"]=self.get_value("売上高","tse-ed-t:NetSales"+treat_reat_or_specifics_without_per_share,text,target_date)
     if(fields["net_sales"]==0):
       fields["net_sales"]=self.get_value("売上高","tse-ed-t:OperatingRevenues"+treat_reat_or_specifics_without_per_share,text,target_date)
+    if(fields["net_sales"]==0):
+      #営業総収入（コンビニのフランチャイズ本部など）
+      fields["net_sales"]=self.get_value("売上高","tse-ed-t:GrossOperatingRevenues"+treat_reat_or_specifics_without_per_share,text,target_date)
     fields["operation_income"]=self.get_value("営業利益","tse-ed-t:OperatingIncome"+treat_reat_or_specifics_without_per_share,text,target_date)
     fields["ordinary_income"]=self.get_value("経常利益","tse-ed-t:OrdinaryIncome"+treat_reat_or_specifics_without_per_share,text,target_date)
     fields["net_income"]=self.get_value("当期純利益","tse-ed-t:ProfitAttributableToOwnersOfParent"+treat_reat_or_specifics_without_per_share,text,target_date)
