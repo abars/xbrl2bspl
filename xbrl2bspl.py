@@ -41,7 +41,7 @@ class Xbrl2BsPl():
     fields_pc=None
 
     for f in zf.namelist():
-      it_pl = re.finditer("-.*s[my]-.*\.htm", f, re.DOTALL)
+      it_pl = re.finditer(r"-.*s[my]-.*\.htm", f, re.DOTALL)
       for m in it_pl:
         text=self.read_text(zf,f)
         fields_pl=self.read_pl(text)
@@ -277,8 +277,8 @@ class Xbrl2BsPl():
     item=item.replace("tse-ed-t","tse-[a-zA-Z]*-t") #reit対応
     term1 = "contextRef=\""+context+"\""
     term2 = "name=\""+item+"\""
-    it1 = re.finditer("<ix:[^<>]*"+term1+"[^<>]*?"+term2+"[^<>]*?>([ 0-9,\.]+)<", line, re.DOTALL)
-    it2 = re.finditer("<ix:[^<>]*"+term2+"[^<>]*?"+term1+"[^<>]*?>([ 0-9,\.]+)<", line, re.DOTALL)
+    it1 = re.finditer("<ix:[^<>]*"+term1+"[^<>]*?"+term2+r"[^<>]*?>([ 0-9,\.]+)<", line, re.DOTALL)
+    it2 = re.finditer("<ix:[^<>]*"+term2+"[^<>]*?"+term1+r"[^<>]*?>([ 0-9,\.]+)<", line, re.DOTALL)
     debug = False
     #debug = item=="jppfs_cor:NetCashProvidedByUsedInFinancingActivities"
     value = self.get_value_adjust(it1,True,yen_unit,debug)
