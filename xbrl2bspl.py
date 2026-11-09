@@ -60,17 +60,9 @@ class Xbrl2BsPl():
         text=self.read_text(zf,f)
         fields_pc=self.read_pc(text)
 
-    acbs_exist=False
+    bs_regex=Xbrl2BsPl.bs_file_regex(zf.namelist())
     for f in zf.namelist():
-      it_bs = re.finditer("-.*acbs[0-9]+-", f, re.DOTALL)
-      for m in it_bs:
-        acbs_exist=True # 連結財務諸表が存在する
-
-    for f in zf.namelist():
-      if(acbs_exist):
-        it_bs = re.finditer("-.*acbs[0-9]+-", f, re.DOTALL)        
-      else:
-        it_bs = re.finditer("-.*bs[0-9]+-", f, re.DOTALL)
+      it_bs = re.finditer(bs_regex, f, re.DOTALL)
       for m in it_bs:
         text=self.read_text(zf,f)
 
@@ -82,6 +74,14 @@ class Xbrl2BsPl():
       if(analyze_success):
         break #breakしないと個別財務諸表を読んでしまう
 
+    if(not fields_bs or fields_bs["liabilities_and_net_assets"]==0):
+      #米国基準はBSの添付ファイルにXBRLのタグが無いので、サマリーの財政状態で総資産と純資産だけを補う
+      for f in zf.namelist():
+        if re.search(r"-.*s[my]-.*\.htm", f, re.DOTALL):
+          summary_bs=self.read_summary_bs(self.read_text(zf,f))
+          if summary_bs:
+            fields_bs=summary_bs
+
     fields={}
     fields["bs"]=fields_bs
     fields["pl"]=fields_pl
@@ -89,20 +89,52 @@ class Xbrl2BsPl():
     fields["pc"]=fields_pc
     return fields
 
+  # 決算短信サマリーの損益項目のタグ。会計基準（日本基準/IFRS/米国基準）や業種でタグ名が異なるため、上から順に探して最初に見つかった値を使う
+  # 末尾の[a-zA-OQ-Z]*はIFRS/US/SE/REITなどの接尾辞に対応する（PerShareなどPで始まる別項目を拾わないようにPを除外）
+  PL_SUMMARY_TAGS={
+    "net_sales":[
+      "NetSales",                 # 売上高（日本基準、NetSalesIFRSなど）
+      "OperatingRevenues",        # 営業収益（電力・鉄道、OperatingRevenuesIFRS/US/SE/REITなど）
+      "GrossOperatingRevenues",   # 営業総収入（コンビニのフランチャイズ本部など）
+      "NetOperatingRevenues",     # 純営業収益（証券）
+      "SalesIFRS",                # 売上収益（IFRS）
+      "RevenueIFRS",              # 収益（IFRS、総合商社など）
+      "RevenuesIFRS",
+      "TotalRevenuesUS",          # 収益合計（米国基準）
+      "RevenuesUS",
+      "OrdinaryRevenuesBK",       # 経常収益（銀行）
+      "OrdinaryRevenuesIN",       # 経常収益（保険）
+    ],
+    "operation_income":[
+      "OperatingIncome",          # 営業利益（OperatingIncomeIFRS/USなど）
+    ],
+    "ordinary_income":[
+      "OrdinaryIncome",           # 経常利益（日本基準）
+      "ProfitBeforeTax",          # 税引前利益（IFRSには経常利益がないため代用）
+      "IncomeBeforeIncomeTaxes",  # 税引前利益（米国基準には経常利益がないため代用）
+    ],
+    "net_income":[
+      "ProfitAttributableToOwnersOfParent",  # 親会社株主に帰属する当期純利益（ProfitAttributableToOwnersOfParentIFRSなど）
+      "NetIncome",                           # 当期純利益（NetIncomeUSなど）
+    ],
+    "net_income_per_share":[
+      "NetIncomePerShare",        # 1株当たり当期純利益（NetIncomePerShareUSなど）
+      "NetIncomePerUnit",         # 1口当たり当期純利益（REIT）
+      "BasicEarningsPerShare",    # 基本的1株当たり当期利益（BasicEarningsPerShareIFRS）
+    ],
+  }
+
   def read_pl_core(self,text,target_date):
     fields={}
     treat_reat_or_specifics_without_per_share="[a-zA-OQ-Z]*"
-    fields["net_sales"]=self.get_value("売上高","tse-ed-t:NetSales"+treat_reat_or_specifics_without_per_share,text,target_date)
-    if(fields["net_sales"]==0):
-      fields["net_sales"]=self.get_value("売上高","tse-ed-t:OperatingRevenues"+treat_reat_or_specifics_without_per_share,text,target_date)
-    fields["operation_income"]=self.get_value("営業利益","tse-ed-t:OperatingIncome"+treat_reat_or_specifics_without_per_share,text,target_date)
-    fields["ordinary_income"]=self.get_value("経常利益","tse-ed-t:OrdinaryIncome"+treat_reat_or_specifics_without_per_share,text,target_date)
-    fields["net_income"]=self.get_value("当期純利益","tse-ed-t:ProfitAttributableToOwnersOfParent"+treat_reat_or_specifics_without_per_share,text,target_date)
-    if(fields["net_income"]==0):
-      fields["net_income"]=self.get_value("当期純利益","tse-ed-t:NetIncome"+treat_reat_or_specifics_without_per_share,text,target_date)
-    fields["net_income_per_share"]=self.get_value("1株当たり当期純利益","tse-ed-t:NetIncomePerShare"+treat_reat_or_specifics_without_per_share,text,target_date,True)
-    if(fields["net_income_per_share"]==0):
-      fields["net_income_per_share"]=self.get_value("1株当たり当期純利益","tse-ed-t:NetIncomePerUnit"+treat_reat_or_specifics_without_per_share,text,target_date,True)
+    jap={"net_sales":"売上高","operation_income":"営業利益","ordinary_income":"経常利益","net_income":"当期純利益","net_income_per_share":"1株当たり当期純利益"}
+    for key,tags in self.PL_SUMMARY_TAGS.items():
+      yen_unit=(key=="net_income_per_share")
+      fields[key]=0
+      for tag in tags:
+        fields[key]=self.get_value(jap[key],"tse-ed-t:"+tag+treat_reat_or_specifics_without_per_share,text,target_date,yen_unit)
+        if(fields[key]!=0):
+          break
     return fields
 
   def read_dividend_per_share_accumulated(self,text,target_date,q2):
@@ -118,6 +150,10 @@ class Xbrl2BsPl():
     dividend=self.get_value("配当","tse-ed-t:DividendPerShare",text,target_date,True)
     if(dividend==0):
       dividend=self.get_value("配当","tse-re-t:DistributionsPerUnitIncludingDistributionsInExcessOfProfitREIT",text,target_date,True)
+    if(dividend==0):
+      #REITで利益超過分配を含む分配金のタグが無い場合は、利益超過分配を含まない分配金と利益超過分配金の合計を使う
+      dividend=self.get_value("配当","tse-re-t:DistributionsPerUnitExcludingDistributionsInExcessOfProfitREIT",text,target_date,True)
+      dividend=dividend+self.get_value("配当","tse-re-t:DistributionsInExcessOfProfitPerUnitREIT",text,target_date,True)
     return dividend
 
   def read_pl(self,text):
@@ -133,8 +169,11 @@ class Xbrl2BsPl():
     current_accumulated_duration_net_income_per_share=fields["net_income_per_share"]
 
     #通期決算
-    if(current_accumulated_duration_net_sales==0):
-      fields=self.read_pl_core(text,"CurrentYearDuration[a-zA-Z_0-9]*")
+    #四半期の累計実績が1つも無い場合のみ通期の実績を読む
+    #（売上高のない銀行・保険などで四半期の実績を捨てないように、売上高だけでは判定しない）
+    #（CurrentYearDurationは業績予想にも使われるため、ResultMemberに限定して予想値を実績として読まないようにする）
+    if(current_accumulated_duration_net_sales==0 and current_accumulated_duration_operation_income==0 and current_accumulated_duration_ordinary_income==0 and current_accumulated_duration_net_income==0):
+      fields=self.read_pl_core(text,"CurrentYearDuration[a-zA-Z_0-9]*ResultMember")
       current_accumulated_duration_net_sales=fields["net_sales"]
       current_accumulated_duration_operation_income=fields["operation_income"]
       current_accumulated_duration_ordinary_income=fields["ordinary_income"]
@@ -240,6 +279,34 @@ class Xbrl2BsPl():
       
     return fields
 
+  @staticmethod
+  def bs_file_regex(namelist):
+    #BSのファイル名の正規表現を返す
+    #連結の財務諸表（acbs/acfs）があればそれを優先する
+    #IFRSの財政状態計算書はbsではなくfs（例：qcfs03、scfs17）
+    for f in namelist:
+      if re.search("-.*ac(?:bs|fs)[0-9]+-", f, re.DOTALL):
+        return "-.*ac(?:bs|fs)[0-9]+-"
+    return "-.*(?:bs|fs)[0-9]+-"
+
+  # IFRSの財政状態計算書（jpigp_cor）から、日本基準のBSの項目に対応するものだけを読む
+  # ネットネットの計算で資産を過大評価しないように、範囲が広い項目（その他の金融資産など）は対応させない
+  IFRS_BS_TAGS={
+    "cash_and_deposits":["CashAndCashEquivalentsIFRS"],
+    "notes_and_accounts_receivable_trade":["TradeAndOtherReceivablesCAIFRS","TradeReceivablesCAIFRS","TradeAndOtherReceivables2CAIFRS"],
+    "investment_securities":["InvestmentSecuritiesNCAIFRS"],
+    "inventories":["InventoriesCAIFRS"],
+    "current_assets":["CurrentAssetsIFRS"],
+    "intangible_assets":["IntangibleAssetsIFRS"],
+    "noncurrent_assets":["NonCurrentAssetsIFRS"],
+    "assets":["AssetsIFRS"],
+    "current_liabilities":["TotalCurrentLiabilitiesIFRS"],
+    "noncurrent_liabilities":["NonCurrentLiabilitiesIFRS"],
+    "liabilities":["LiabilitiesIFRS"],
+    "net_assets":["EquityIFRS"],
+    "liabilities_and_net_assets":["LiabilitiesAndEquityIFRS"],
+  }
+
   def read_bs(self,text):
     fields={}
 
@@ -251,7 +318,37 @@ class Xbrl2BsPl():
       fields["notes_and_accounts_receivable_trade"]=fields["notes_and_accounts_receivable_trade"]+self.get_value("売掛金","jppfs_cor:AccountsReceivableTrade",text)
       fields["notes_and_accounts_receivable_trade"]=fields["notes_and_accounts_receivable_trade"]+self.get_value("受取手形","jppfs_cor:NotesReceivableTrade",text)
 
+    if(fields["liabilities_and_net_assets"]==0):
+      #IFRS
+      for key,tags in self.IFRS_BS_TAGS.items():
+        for tag in tags:
+          v=self.get_value(key,"jpigp_cor:"+tag,text)
+          if(v!=0):
+            fields[key]=v
+            break
+
     return fields
+
+  def read_summary_bs(self,text):
+    #決算短信サマリーの財政状態から総資産と純資産を読む（BSの添付ファイルにXBRLのタグが無い米国基準向け）
+    #日本基準はBSの添付ファイルがあるため対象外にする（タグ名がTotalAssetsUS/TotalAssetsIFRSのものだけを読む）
+    context="Current[a-zA-Z0-9]*Instant[a-zA-Z_0-9]*ResultMember"  #当期末の実績（例：CurrentAccumulatedQ2Instant_ConsolidatedMember_ResultMember）
+    for suffix,equity_tags in [("US",["NetAssetsUS","ShareholdersEquityUS"]),("IFRS",["TotalEquityIFRS","EquityAttributableToOwnersOfParentIFRS"])]:
+      assets=self.get_value("総資産","tse-ed-t:TotalAssets"+suffix,text,context)
+      if(assets==0):
+        continue
+      net_assets=0
+      for tag in equity_tags:
+        net_assets=self.get_value("純資産","tse-ed-t:"+tag,text,context)
+        if(net_assets!=0):
+          break
+      fields=self.read_bs("")  #全ての項目を0で初期化する
+      fields["assets"]=assets
+      fields["liabilities_and_net_assets"]=assets
+      fields["net_assets"]=net_assets
+      fields["liabilities"]=assets-net_assets
+      return fields
+    return None
 
   def read_cf(self,text):
     fields={}
