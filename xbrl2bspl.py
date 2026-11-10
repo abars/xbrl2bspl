@@ -355,7 +355,8 @@ class Xbrl2BsPl():
 
     ex_map = XbrlTaxonomy.cf_taxonomy()
     for i in range(0,len(ex_map)):
-      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"Current[a-zA-Z_]*")
+      #中間期の決算短信（2024年4月以降の様式）は期間がInterimDurationになる
+      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"(?:Current|Interim)[a-zA-Z_]*")
 
     return fields
 
@@ -364,7 +365,8 @@ class Xbrl2BsPl():
 
     ex_map = XbrlTaxonomy.pc_taxonomy()
     for i in range(0,len(ex_map)):
-      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"Current[a-zA-Z_]*")
+      #中間期の決算短信（2024年4月以降の様式）は期間がInterimDurationになる
+      fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"(?:Current|Interim)[a-zA-Z_]*")
 
     return fields
 
