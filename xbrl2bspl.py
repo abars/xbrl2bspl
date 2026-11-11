@@ -360,6 +360,51 @@ class Xbrl2BsPl():
 
     return fields
 
+  # 業種別の売上高・売上原価・売上総利益のタグ（EDINETの勘定科目リスト 1f_AccountList.xls の業種別のシートから選んだもの。
+  # 候補の抜き出しは taxonomy_table/sector_revenue_tags.py）。
+  # pc_taxonomy は一般商工業のシートだけから作っているため、建設業の完成工事高や鉄道の営業収益などは入っていない。
+  # 一般の NetSales / CostOfSales / GrossProfit が0の場合だけ、上から順に探して補う。
+  # ("first", [...]) は最初に見つかった値（合計の項目）、("sum", [...]) は見つかった値の合計（内訳しかない業種）
+  SECTOR_PC_FALLBACK={
+    "net_sales":[
+      ("sum",[  # 建設業：完成工事高、兼業事業売上高、開発事業等売上高、不動産事業等売上高（売上高の合計がない場合）
+        "NetSalesOfCompletedConstructionContractsCNS","NetSalesOfSideLineBusinessCNS",
+        "NetSalesOfDevelopmentBusinessAndOtherCNS","NetSalesOfRealEstateBusinessAndOtherCNS"]),
+      ("first",[
+        "OperatingRevenueRWY","OperatingRevenueTotalRWY",                    # 鉄道事業：営業収益、全事業営業収益
+        "OperatingRevenueELE","ElectricUtilityOperatingRevenueELE",          # 電気事業：営業収益、電気事業営業収益
+        "SalesFromGasBusinessGAS",                                           # ガス事業：ガス事業売上高
+        "ShippingBusinessRevenueAndOtherOperatingRevenueWAT",                # 海運事業：海運業収益及びその他の営業収益
+        "OperatingRevenueHighwayBusinessHWY",                                # 高速道路事業：営業収益
+        "OperatingRevenueOILTelecommunications",                             # 電気通信事業：営業収益
+        "OperatingRevenueSEC",                                               # 第一種金融商品取引業：営業収益
+        "OperatingRevenueCNA",                                               # 建設保証業：営業収益
+        "OperatingRevenueSPF",                                               # 特定金融業：営業収益
+        "OperatingRevenueIVT",                                               # 投資運用業：営業収益
+        "OperatingRevenueINV",                                               # 投資業：営業収益
+        "OperatingRevenueCMD",                                               # 商品先物取引業：営業収益
+        "OrdinaryIncomeBNK",                                                 # 銀行・信託業：経常収益（決算短信のサマリーでも売上高の欄に入る）
+        "OperatingIncomeINS",                                                # 生命保険業・損害保険業：経常収益（同上）
+      ]),
+      ("sum",["ShippingBusinessRevenueWAT","OtherBusinessRevenueWAT"]),     # 海運事業：海運業収益＋その他事業収益（合計がない場合）
+    ],
+    "cost_of_sales":[
+      ("sum",[  # 建設業：完成工事原価など
+        "CostOfSalesOfCompletedConstructionContractsCNS","CostOfSalesOnSideLineBusinessCNS",
+        "CostOfSalesOnDevelopmentBusinessAndOtherCNS","CostOfSalesOnRealEstateBusinessAndOtherCNS"]),
+      ("first",["ShippingBusinessExpensesAndOtherOperatingExpensesWAT"]),     # 海運事業：海運業費用及びその他の営業費用
+      ("sum",["ShippingBusinessExpensesWAT","OtherBusinessExpensesWAT"]),   # 海運事業：海運業費用＋その他事業費用
+    ],
+    "gross_profit":[
+      ("sum",[  # 建設業：完成工事総利益など
+        "GrossProfitOnCompletedConstructionContractsCNS","GrossProfitOnSideLineBusinessCNS",
+        "GrossProfitOnDevelopmentBusinessAndOtherCNS","GrossProfitOnRealEstateBusinessAndOtherCNS"]),
+      ("first",[
+        "OperatingGrossProfitWAT",                                           # 海運事業：営業総利益
+      ]),
+    ],
+  }
+
   def read_pc(self,text):
     fields={}
 
@@ -367,6 +412,17 @@ class Xbrl2BsPl():
     for i in range(0,len(ex_map)):
       #中間期の決算短信（2024年4月以降の様式）は期間がInterimDurationになる
       fields[ex_map[i][0]]=self.get_value(ex_map[i][1],ex_map[i][2],text,"(?:Current|Interim)[a-zA-Z_]*")
+
+    #業種別のタグしかない会社（建設業の完成工事高、鉄道の営業収益など）は、売上高・売上原価・売上総利益を補う
+    for key,groups in Xbrl2BsPl.SECTOR_PC_FALLBACK.items():
+      if fields.get(key):
+        continue
+      for mode,tags in groups:
+        values=[self.get_value(key,"jppfs_cor:"+tag,text,"(?:Current|Interim)[a-zA-Z_]*") for tag in tags]
+        found=[v for v in values if v]
+        if found:
+          fields[key]=sum(found) if mode=="sum" else found[0]
+          break
 
     return fields
 
