@@ -125,6 +125,15 @@ class Xbrl2BsPl():
   }
 
   def read_pl_core(self,text,target_date):
+    # 連結の値を優先する。期間名のパターンは _NonConsolidatedMember（個別）にも一致するため、
+    # 持株会社の銀行などで、連結にない営業収益・営業利益を個別の値で拾わないように、まず個別を除いて読む。
+    # 個別しか開示していない会社は、何も見つからないので個別も含めて読み直す
+    fields=self.read_pl_core_context(text,"(?![^\"]*NonConsolidated)"+target_date)
+    if all(v==0 for v in fields.values()):
+      fields=self.read_pl_core_context(text,target_date)
+    return fields
+
+  def read_pl_core_context(self,text,target_date):
     fields={}
     treat_reat_or_specifics_without_per_share="[a-zA-OQ-Z]*"
     jap={"net_sales":"売上高","operation_income":"営業利益","ordinary_income":"経常利益","net_income":"当期純利益","net_income_per_share":"1株当たり当期純利益"}
