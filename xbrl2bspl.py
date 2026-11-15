@@ -52,13 +52,10 @@ class Xbrl2BsPl():
         text=self.read_text(zf,f)
         fields_cf=self.read_cf(text)
 
-    for f in zf.namelist():
-      it_pc = re.findall("-.*pc[0-9]+-", f, re.DOTALL)
-      if len(it_pc)==0:
-        it_pc = re.findall("-.*pl[0-9]+-", f, re.DOTALL)
-      for m in it_pc:
-        text=self.read_text(zf,f)
-        fields_pc=self.read_pc(text)
+    pc_file=Xbrl2BsPl.pc_file(zf.namelist())
+    if pc_file:
+      cal_file=Xbrl2BsPl.cal_file(zf.namelist())
+      fields_pc=self.read_pc(self.read_text(zf,pc_file),self.read_text(zf,cal_file) if cal_file else None,Xbrl2BsPl.is_consolidated_file(pc_file))
 
     bs_regex=Xbrl2BsPl.bs_file_regex(zf.namelist())
     for f in zf.namelist():
@@ -288,6 +285,35 @@ class Xbrl2BsPl():
       
     return fields
 
+  # 損益計算書のファイル名。pc は損益及び包括利益計算書（1計算書方式）、pl は損益計算書。
+  # 2文字目が c は連結、n は個別（acpl01・anpl01 など）。1文字目は a 通期、q 四半期、s 中間期
+  PC_FILE_REGEX="-[a-z][cn](?:pc|pl)[0-9]+-"
+  CI_FILE_REGEX="-[a-z][cn]ci[0-9]+-"
+
+  @staticmethod
+  def pc_file(namelist):
+    """読む損益計算書のファイル。連結があれば連結を優先する（通期の決算短信には個別の損益計算書も入っていることがあり、
+    持株会社の個別は営業収益・営業収入などで売上高がない）。同じ種類が複数ある時は、名前の順で最初のもの
+    （四半期のIFRSは pl13 が期首からの累計、pl23 が3か月間）"""
+    files=sorted(f for f in namelist if re.search(Xbrl2BsPl.PC_FILE_REGEX,f))
+    if not files:
+      #IFRSで損益計算書と包括利益計算書を1つにまとめている会社は、ci のファイルに損益計算書がある
+      files=sorted(f for f in namelist if re.search(Xbrl2BsPl.CI_FILE_REGEX,f))
+    consolidated=[f for f in files if Xbrl2BsPl.is_consolidated_file(f)]
+    return (consolidated or files or [None])[0]
+
+  @staticmethod
+  def is_consolidated_file(f):
+    return bool(re.search("-[a-z]c(?:pc|pl|ci|bs|fs|cf)[0-9]+-",f))
+
+  @staticmethod
+  def cal_file(namelist):
+    """添付書類（財務諸表）の計算リンク（科目の足し引きの関係）"""
+    for f in namelist:
+      if "Attachment" in f and f.endswith("-cal.xml"):
+        return f
+    return None
+
   @staticmethod
   def bs_file_regex(namelist):
     #BSのファイル名の正規表現を返す
@@ -414,7 +440,29 @@ class Xbrl2BsPl():
     ],
   }
 
-  def read_pc(self,text):
+  # IFRSの損益計算書（jpigp_cor）から、日本基準の損益計算書の項目に対応するものを読む（日本基準の値がない場合だけ）。
+  # IFRSには経常利益がないので、決算短信のサマリーと同じく税引前利益を経常利益の欄にも入れる
+  IFRS_PC_TAGS={
+    "net_sales":["RevenueIFRS","NetSalesIFRS","SalesIFRS","OperatingRevenueIFRS","Revenue2IFRS"],
+    "cost_of_sales":["CostOfSalesIFRS"],
+    "gross_profit":["GrossProfitIFRS"],
+    "selling_general_and_administrative_expenses":["SellingGeneralAndAdministrativeExpensesIFRS"],
+    "operating_income":["OperatingProfitLossIFRS"],
+    "ordinary_income":["ProfitLossBeforeTaxIFRS"],
+    "income_before_income_taxes":["ProfitLossBeforeTaxIFRS"],
+    "income_taxes":["IncomeTaxExpenseIFRS"],
+    "profit_loss":["ProfitLossIFRS"],
+    "profit_loss_attributable_to_owners_of_parent":["ProfitLossAttributableToOwnersOfParentIFRS"],
+  }
+
+  # 計算リンクで売上高を探す起点（営業利益）と、その間にある総利益（売上総利益・営業総利益など）
+  CAL_OPERATING_INCOME=["jppfs_cor_OperatingIncome","jpigp_cor_OperatingProfitLossIFRS"]
+  CAL_GROSS_PROFIT=re.compile(r"GrossProfit")
+  # 計算リンクがない会社の、売上高の代わりの科目（日本基準。営業収益・営業総収入・営業収入・完成業務高）
+  NET_SALES_TOTAL_TAGS=["OperatingRevenue1","GrossOperatingRevenue","OperatingRevenue2","ContractsCompletedRevOA"]
+
+  def read_pc(self,text,cal_text=None,consolidated=True):
+    """損益計算書。売上高（NetSales）がない会社は、業種別のタグ、IFRSのタグ、計算リンク（cal_text）の順に売上高を探す"""
     fields={}
 
     ex_map = XbrlTaxonomy.pc_taxonomy()
@@ -433,7 +481,82 @@ class Xbrl2BsPl():
           fields[key]=sum(found) if mode=="sum" else found[0]
           break
 
+    #円以外の通貨（米ドルなど）で決算を出している会社は、百万円の項目と混ざるので、ここから先の補いはしない
+    units=set(re.findall(r'<ix:nonFraction\b[^>]*unitRef="([^"]+)"',text))
+    if units and "JPY" not in units:
+      return fields
+
+    #IFRSの会社は jpigp_cor のタグで読む
+    for key,tags in Xbrl2BsPl.IFRS_PC_TAGS.items():
+      if fields.get(key):
+        continue
+      for tag in tags:
+        v=self.get_value(key,"jpigp_cor:"+tag,text,"(?:Current|Interim)[a-zA-Z_]*")
+        if v:
+          fields[key]=v
+          break
+
+    #売上高をほかの科目（営業収益・営業収入・会社独自の科目など）で出している会社は、計算リンクで営業利益に足されている科目を売上高にする
+    if not fields.get("net_sales") and cal_text:
+      fields["net_sales"]=self.read_revenue_by_cal(text,cal_text,consolidated)
+    if not fields.get("net_sales"):
+      for tag in Xbrl2BsPl.NET_SALES_TOTAL_TAGS:
+        v=self.get_value("net_sales","jppfs_cor:"+tag,text,"(?:Current|Interim)[a-zA-Z_]*")
+        if v:
+          fields["net_sales"]=v
+          break
+
     return fields
+
+  @staticmethod
+  def cal_trees(cal_text):
+    """計算リンク：{ロール名: {親の要素ID: [(重み, 子の要素ID)]}}。要素IDは「jppfs_cor_NetSales」のような形"""
+    locs={}
+    for m in re.finditer(r"<link:loc\b[^>]*>",cal_text):
+      href=re.search(r'xlink:href="[^"#]*#([^"]+)"',m.group(0))
+      label=re.search(r'xlink:label="([^"]+)"',m.group(0))
+      if href and label:
+        locs[label.group(1)]=href.group(1)
+    trees={}
+    for role,body in re.findall(r'<link:calculationLink\b[^>]*xlink:role="([^"]+)"[^>]*>(.*?)</link:calculationLink>',cal_text,re.DOTALL):
+      tree={}
+      for arc in re.findall(r"<link:calculationArc\b[^>]*>",body):
+        fr=re.search(r'xlink:from="([^"]+)"',arc)
+        to=re.search(r'xlink:to="([^"]+)"',arc)
+        w=re.search(r'weight="([^"]+)"',arc)
+        if fr and to and w:
+          tree.setdefault(locs.get(fr.group(1),fr.group(1)),[]).append((float(w.group(1)),locs.get(to.group(1),to.group(1))))
+      trees[role.split("/")[-1]]=tree
+    return trees
+
+  def read_revenue_by_cal(self,text,cal_text,consolidated=True):
+    """計算リンクから売上高を探す。営業利益に＋で足される科目（売上総利益・営業総利益があればその下の＋の科目）が売上高。
+    会社独自の科目（拡張科目）でも読める。損益計算書のロールは、読んだファイルと同じく連結か個別かで選ぶ"""
+    names={}
+    for name in re.findall(r'<ix:nonFraction\b[^>]*name="([^"]+)"',text):
+      names[name.replace(":","_")]=name
+    trees=Xbrl2BsPl.cal_trees(cal_text)
+    roles=[r for r in trees if re.search("StatementOf(?:Income|ProfitOrLoss)",r) and "Comprehensive" not in r]
+    roles.sort(key=lambda r:("Consolidated" in r)!=consolidated)
+    for role in roles:
+      tree=trees[role]
+      for root in Xbrl2BsPl.CAL_OPERATING_INCOME:
+        plus=[c for w,c in tree.get(root,[]) if w>0]
+        gross=[c for c in plus if Xbrl2BsPl.CAL_GROSS_PROFIT.search(c) and tree.get(c)]
+        if gross:
+          plus=[c for w,c in tree[gross[0]] if w>0]
+        values=[self.get_value("net_sales",names[c],text,"(?:Current|Interim)[a-zA-Z_]*") for c in plus if c in names]
+        total=sum(v for v in values if v)
+        if total:
+          return total
+      #営業利益の計算関係がない会社は、ほかの科目の内訳になっていない収益の合計（子がある科目）を探す
+      children=set(c for arcs in tree.values() for w,c in arcs)
+      for parent in tree:
+        if parent not in children and parent in names and re.search("Revenue|Sales",parent) and not re.search("NonOperating|Cost",parent):
+          v=self.get_value("net_sales",names[parent],text,"(?:Current|Interim)[a-zA-Z_]*")
+          if v:
+            return v
+    return 0
 
   def get_value(self,jap,item,line,context=None,yen_unit=False):
     if(not context):
